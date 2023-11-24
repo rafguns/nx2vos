@@ -9,7 +9,6 @@ You will typically want to use them both, especailly if you have node-level data
 import csv
 import pathlib
 from collections.abc import Iterable
-from typing import Optional
 
 import networkx as nx
 
@@ -17,7 +16,7 @@ __version__ = "0.1"
 
 
 def write_vos_map(
-    G: nx.Graph, fname: str | pathlib.Path, attrs: Optional[Iterable] = None
+    G: nx.Graph, fname: str | pathlib.Path, attrs: Iterable | None = None
 ):
     if attrs is None:
         attrs = []
