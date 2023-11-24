@@ -16,7 +16,17 @@ __version__ = "0.1"
 
 
 def write_vos_map(
-    G: nx.Graph, fname: str | pathlib.Path, attrs: Iterable | None = None
+    G: nx.Graph,
+    fname: str | pathlib.Path,
+    *,
+    sublabel_attr: str | None = None,
+    description_attr: str | None = None,
+    url_attr: str | None = None,
+    x_attr: str | None = None,
+    y_attr: str | None = None,
+    cluster_attr: str | None = None,
+    weight_attrs: list[str] | None = None,
+    score_attrs: list[str] | None = None,
 ):
     if attrs is None:
         attrs = []
