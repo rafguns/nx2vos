@@ -66,9 +66,7 @@ def _prepare_attrs(
             err = f"Attribute '{nx_attr}' not defined for all nodes"
             raise Nx2VosError(err)
 
-        to_write = (
-            validate_transform(node_vals, nx_attr) if validate_transform else node_vals
-        )
+        to_write = validate_transform(node_vals) if validate_transform else node_vals
         for n, val_to_write in to_write:
             G.nodes[n][vos_attr] = val_to_write
         attrs.append(vos_attr)

@@ -23,7 +23,7 @@ def G_with_attrs(G_simple):  # noqa: N802 (Function name should be lowercase)
     G = G_simple.copy()
     for n in G:
         G.nodes[n]["shorttext"] = n * 20
-        G.nodes[n]["logntext"] = n * 200
+        G.nodes[n]["longtext"] = n * 200
 
         G.nodes[n]["urllike"] = f"http://x.co/{n}"
 
@@ -61,46 +61,39 @@ def test_write_vos_map_noattrs(tmp_file, G_simple):
 
 
 @pytest.mark.parametrize(
-    ("vos_attribute", "network_attribute", "expected"),
+    ("attribute_mapping", "expected"),
     [
         (
-            "sublabel",
-            "shortttext",
+            {"sublabel": "shorttext"},
             {f"1\ta\t{'a' * 20}\n", f"2\tb\t{'b' * 20}\n", f"3\tc\t{'c' * 20}\n"},
         ),
         (
-            "description",
-            "longtext",
+            {"description": "longtext"},
             {f"1\ta\t{'a' * 200}\n", f"2\tb\t{'b' * 200}\n", f"3\tc\t{'c' * 200}\n"},
         ),
         (
-            "url",
-            "urllike",
+            {"url": "urllike"},
             {"1\ta\thttp://x.co/a\n", "2\tb\thttp://x.co/b\n", "3\tc\thttp://x.co/c\n"},
         ),
         (
-            "cluster",
-            "shortttext",
-            {f"1\ta\t{'a' * 20}\n", f"2\tb\t{'b' * 20}\n", f"3\tc\t{'c' * 20}\n"},
+            {"x": "smallint", "y": "smallint"},
+            {"1\ta\t5\t5\n", "2\tb\t5\t5\n", "3\tc\t5\t5\n"},
         ),
     ],
 )
 def test_write_vos_map_attribute(
-    tmp_file, G_with_attrs, vos_attribute, network_attribute, expected
+    tmp_file, G_with_attrs, attribute_mapping, expected
 ):
-    kwargs = {f"{vos_attribute}_attr": network_attribute}
-    nx2vos.write_vos_map(G_with_attrs, tmp_file, **kwargs)
+    mapping = {f"{k}_attr": v for k, v in attribute_mapping.items()}
+    nx2vos.write_vos_map(G_with_attrs, tmp_file, **mapping)
 
     with open(tmp_file) as fh:
         contents = list(fh)
 
-    expected_header = f"id\tlabel\t{vos_attribute}\n"
+    vos_attributes = "\t".join(attribute_mapping.keys())
+    expected_header = f"id\tlabel\t{vos_attributes}\n"
     assert contents[0] == expected_header
     assert set(contents[1:]) == expected
-
-
-def test_write_vos_map_description(tmp_file, G_with_attrs):
-    ...
 
 
 def test_write_vos_map_xy(tmp_file, G_with_attrs):
