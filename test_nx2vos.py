@@ -158,3 +158,8 @@ def test_write_vos_map_weights_scores(
 
     assert contents[0] == expected_header
     assert set(contents[1:]) == expected_contents
+
+
+def test_nonexisting_attr(G_simple):
+    with pytest.raises(nx2vos.Nx2VosError):
+        nx2vos.write_vos_map(G_simple, "x", sublabel_attr="foo")
