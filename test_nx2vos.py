@@ -1,3 +1,5 @@
+import re
+
 import networkx as nx
 import pytest
 
@@ -79,11 +81,17 @@ def test_write_vos_map_noattrs(tmp_file, G_simple):
             {"x": "smallint", "y": "smallint"},
             {"1\ta\t5\t5\n", "2\tb\t5\t5\n", "3\tc\t5\t5\n"},
         ),
+        (
+            {"x": "float", "y": "float"},
+            {"1\ta\t5.0\t5.0\n", "2\tb\t5.0\t5.0\n", "3\tc\t5.0\t5.0\n"},
+        ),
+        (
+            {"cluster": "smallint"},
+            {"1\ta\t1\n", "2\tb\t1\n", "3\tc\t1\n"},
+        ),
     ],
 )
-def test_write_vos_map_attribute(
-    tmp_file, G_with_attrs, attribute_mapping, expected
-):
+def test_write_vos_map_attribute(tmp_file, G_with_attrs, attribute_mapping, expected):
     mapping = {f"{k}_attr": v for k, v in attribute_mapping.items()}
     nx2vos.write_vos_map(G_with_attrs, tmp_file, **mapping)
 
@@ -96,13 +104,57 @@ def test_write_vos_map_attribute(
     assert set(contents[1:]) == expected
 
 
-def test_write_vos_map_xy(tmp_file, G_with_attrs):
-    ...
+@pytest.mark.parametrize(
+    ("attribute_mapping", "expected_pattern"),
+    [
+        ({"cluster": "shorttext"}, "[123]\t[abc]\t[123]\n"),
+        ({"cluster": "longtext"}, "[123]\t[abc]\t[123]\n"),
+    ],
+)
+def test_write_vos_map_cluster(
+    tmp_file, G_with_attrs, attribute_mapping, expected_pattern
+):
+    mapping = {f"{k}_attr": v for k, v in attribute_mapping.items()}
+    nx2vos.write_vos_map(G_with_attrs, tmp_file, **mapping)
+
+    with open(tmp_file) as fh:
+        contents = list(fh)
+
+    vos_attributes = "\t".join(attribute_mapping.keys())
+    expected_header = f"id\tlabel\t{vos_attributes}\n"
+    assert contents[0] == expected_header
+    for line in contents[1:]:
+        assert re.match(expected_pattern, line) is not None
 
 
-def test_write_vos_map_weights(tmp_file, G_with_attrs):
-    ...
+@pytest.mark.parametrize(
+    ("attribute_mapping", "expected_header", "expected_contents"),
+    [
+        (
+            {"weight": ["smallint", "largeint"]},
+            "id\tlabel\tweight<smallint>\tweight<largeint>\n",
+            {"1\ta\t5\t50000\n", "2\tb\t5\t50000\n", "3\tc\t5\t50000\n"},
+        ),
+                (
+            {"score": ["smallint", "largeint"]},
+            "id\tlabel\tscore<smallint>\tscore<largeint>\n",
+            {"1\ta\t5\t50000\n", "2\tb\t5\t50000\n", "3\tc\t5\t50000\n"},
+        ),
+        (
+            {"weight": ["smallint"], "score": ["largeint"]},
+            "id\tlabel\tweight<smallint>\tscore<largeint>\n",
+            {"1\ta\t5\t50000\n", "2\tb\t5\t50000\n", "3\tc\t5\t50000\n"},
+        ),
+    ],
+)
+def test_write_vos_map_weights_scores(
+    tmp_file, G_with_attrs, attribute_mapping, expected_header, expected_contents
+):
+    mapping = {f"{k}_attrs": v for k, v in attribute_mapping.items()}
+    nx2vos.write_vos_map(G_with_attrs, tmp_file, **mapping)
 
+    with open(tmp_file) as fh:
+        contents = list(fh)
 
-def test_write_vos_map_scores(tmp_file, G_with_attrs):
-    ...
+    assert contents[0] == expected_header
+    assert set(contents[1:]) == expected_contents

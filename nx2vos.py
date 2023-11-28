@@ -47,7 +47,7 @@ def _prepare_attrs(
         if not attrlist:
             continue
         for attr in attrlist:
-            weights_scores.append((attr, f"{keyword}<{attr}>", _to_inc_number))
+            weights_scores.append((attr, f"{keyword}<{attr}>", None))
 
     for nx_attr, vos_attr, validate_transform in [
         (sublabel_attr, "sublabel", None),
