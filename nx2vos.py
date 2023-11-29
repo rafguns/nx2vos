@@ -24,50 +24,53 @@ def _to_inc_number(node_vals):
     return [(n, vals2number[v]) for n, v in node_vals]
 
 
-def _prepare_attrs(
-    G: nx.Graph,
-    sublabel_attr: str | None = None,
-    description_attr: str | None = None,
-    url_attr: str | None = None,
-    x_attr: str | None = None,
-    y_attr: str | None = None,
-    cluster_attr: str | None = None,
-    weight_attrs: list[str] | None = None,
-    score_attrs: list[str] | None = None,
-):
+def _is_numeric(val):
+    return isinstance(val, int | float)
+
+
+def _transform_weight_score(attr_dict):
+    tmp = {}
+    for keyword in ["weight", "score"]:
+        for attr in attr_dict.pop(keyword, []):
+            tmp[f"{keyword}<{attr}>"] = attr
+    return {**attr_dict, **tmp}
+
+
+def _prepare_attrs(G: nx.Graph, attr_dict: dict[str, str | None]):
     attrs = []
 
-    # weight and score are complex, so we first transform these so we can handle them
-    # the same as, e.g., cluster.
-    weights_scores = []
-    for attrlist, keyword in [
-        (weight_attrs, "weight"),
-        (score_attrs, "score"),
-    ]:
-        if not attrlist:
-            continue
-        for attr in attrlist:
-            weights_scores.append((attr, f"{keyword}<{attr}>", None))
+    # Leave out all unspecified attributes (None or empty iterable)
+    attr_dict = {k: v for k, v in attr_dict.items() if v}
+    # Transform weight and score so we can handle them the same as other attributes.
+    attr_dict = _transform_weight_score(attr_dict)
 
-    for nx_attr, vos_attr, validate_transform in [
-        (sublabel_attr, "sublabel", None),
-        (description_attr, "description", None),
-        (url_attr, "url", None),
-        (x_attr, "x", None),
-        (y_attr, "y", None),
-        (cluster_attr, "cluster", _to_inc_number),
-        *weights_scores,
-    ]:
-        if not nx_attr:
-            continue
+    # Check: x and y need to occur together
+    if len(attr_dict.keys() & {"x", "y"}) == 1:
+        err = "Attributes 'x' and 'y' cannot occur separately"
+        raise Nx2VosError(err)
 
+    for vos_attr, nx_attr in attr_dict.items():
         node_vals = G.nodes(data=nx_attr)
+
+        # Check 1: attribute needs to be defined for every node
         if any(val is None for _, val in node_vals):
             err = f"Attribute '{nx_attr}' not defined for all nodes"
             raise Nx2VosError(err)
+        # Check 2: numeric values where applicable
+        if (
+            vos_attr in {"x", "y"} or vos_attr.startswith(("weight", "score"))
+        ) and not all(_is_numeric(val) for _, val in node_vals):
+            err = f"Attribute '{vos_attr}' requires numeric values"
+            raise Nx2VosError(err)
+        # Transform: transform cluster names to incrementing numbers
+        if vos_attr == "cluster":
+            node_vals = _to_inc_number(node_vals)
+            # Check 3: no more than 1000 clusters
+            if any(val > 1000 for _, val in node_vals):  # noqa: PLR2004
+                err = "VOSviewer does not support more than 1000 clusters"
+                raise Nx2VosError(err)
 
-        to_write = validate_transform(node_vals) if validate_transform else node_vals
-        for n, val_to_write in to_write:
+        for n, val_to_write in node_vals:
             G.nodes[n][vos_attr] = val_to_write
         attrs.append(vos_attr)
 
@@ -90,14 +93,16 @@ def write_vos_map(
     # Transform attributes to VOSviewer format
     G, attrs = _prepare_attrs(
         G,
-        sublabel_attr,
-        description_attr,
-        url_attr,
-        x_attr,
-        y_attr,
-        cluster_attr,
-        weight_attrs,
-        score_attrs,
+        {
+            "sublabel": sublabel_attr,
+            "description": description_attr,
+            "url": url_attr,
+            "x": x_attr,
+            "y": y_attr,
+            "cluster": cluster_attr,
+            "weight": weight_attrs,
+            "score": score_attrs,
+        },
     )
     # Write to file
     with open(fname, "w", newline="") as fh:

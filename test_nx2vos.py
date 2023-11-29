@@ -135,7 +135,7 @@ def test_write_vos_map_cluster(
             "id\tlabel\tweight<smallint>\tweight<largeint>\n",
             {"1\ta\t5\t50000\n", "2\tb\t5\t50000\n", "3\tc\t5\t50000\n"},
         ),
-                (
+        (
             {"score": ["smallint", "largeint"]},
             "id\tlabel\tscore<smallint>\tscore<largeint>\n",
             {"1\ta\t5\t50000\n", "2\tb\t5\t50000\n", "3\tc\t5\t50000\n"},
@@ -160,6 +160,24 @@ def test_write_vos_map_weights_scores(
     assert set(contents[1:]) == expected_contents
 
 
-def test_nonexisting_attr(G_simple):
+def test_nonexisting_attr_raises(G_simple, tmp_file):
     with pytest.raises(nx2vos.Nx2VosError):
-        nx2vos.write_vos_map(G_simple, "x", sublabel_attr="foo")
+        nx2vos.write_vos_map(G_simple, tmp_file, sublabel_attr="foo")
+
+
+def test_x_y_attr_raises(G_with_attrs, tmp_file):
+    with pytest.raises(nx2vos.Nx2VosError):
+        nx2vos.write_vos_map(G_with_attrs, tmp_file, x_attr="smallint")
+    with pytest.raises(nx2vos.Nx2VosError):
+        nx2vos.write_vos_map(G_with_attrs, tmp_file, y_attr="smallint")
+
+
+def test_nonnumeric_weights_scores_raises(G_with_attrs, tmp_file):
+    with pytest.raises(nx2vos.Nx2VosError):
+        nx2vos.write_vos_map(
+            G_with_attrs, tmp_file, weight_attrs=["smallint", "shorttext"]
+        )
+    with pytest.raises(nx2vos.Nx2VosError):
+        nx2vos.write_vos_map(
+            G_with_attrs, tmp_file, score_attrs=["smallint", "shorttext"]
+        )
