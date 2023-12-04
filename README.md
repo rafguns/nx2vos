@@ -3,6 +3,15 @@ nx2vos
 
 nx2vos is a simple Python library that exports [networkx](https://networkx.org) graphs to the [VOSviewer](https://www.vosviewer.com/) format.
 
+## Installation
+
+Install with [`pip`](https://pip.pypa.io/en/stable/):
+
+```
+pip install nx2vos
+```
+
+
 ## Usage
 
 ### Basic usage
