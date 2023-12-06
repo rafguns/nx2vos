@@ -116,5 +116,8 @@ def write_vos_network(G: nx.Graph, fname: str | pathlib.Path):
     nodes = dict(zip(G.nodes(), range(1, len(G) + 1), strict=True))
     with open(fname, "w", newline="") as fh:
         writer = csv.writer(fh, delimiter="\t")
-        for u, v, d in G.edges(data=True):
-            writer.writerow([nodes[u], nodes[v], d["weight"]])
+        for u, v, weight in G.edges(data="weight"):
+            row = (
+                (nodes[u], nodes[v]) if weight is None else (nodes[u], nodes[v], weight)
+            )
+            writer.writerow(row)
