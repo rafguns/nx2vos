@@ -16,10 +16,10 @@ pip install nx2vos
 
 ### Basic usage
 
-Using nx2vos, you can write a networkx graph to VOSviewer map and network files. From the VOSviewer manual:
+Using nx2vos, you can write a networkx graph to [VOSviewer map and network files](https://app.vosviewer.com/docs/file-types/map-and-network-file-type/):
 
-- A map file is a text file that contains information about the items in a map. Items are characterized by a number of attributes.
-- A network file is a text file that contains information about the links between the items in a map. A network file specifies which pairs of items are connected by a link. It also specifies the strength of each link.
+- A **map file** contains information about the items (i.e., nodes) in a VOSviewer map. Items can be characterized by a number of attributes.
+- A **network file** contains information about the links between the items in a map. A network file specifies which pairs of items are connected, as well as the strength of each link.
 
 Typically, you want to save both the map and network file:
 
@@ -36,7 +36,7 @@ nx2vos.write_vos_map(G, "map.txt")
 nx2vos.write_vos_network(G, "network.txt")
 ```
 
-Visualize the result in VOSviewer by clicking `Create...` in the `File` tab on the left. Choose `Create a map based on network data` and point VOSviewer to your map and network file. In the following screens, you can adjust the map by, for instance, excluding certain nodes or edges. After clicking `Finish`, the resulting map is shown.
+To visualize the result in VOSviewer, click `Create...` in the `File` tab on the left. Choose `Create a map based on network data` and point VOSviewer to your map and network file. In the following screens, you can adjust the map by, for instance, excluding certain nodes or edges. After clicking `Finish`, the resulting map is shown.
 
 ### Node attributes
 
