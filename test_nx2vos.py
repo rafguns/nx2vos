@@ -16,6 +16,14 @@ def G_simple():  # noqa: N802 (Function name should be lowercase)
 
 
 @pytest.fixture()
+def G_unweighted():  # noqa: N802 (Function name should be lowercase)
+    G = nx.Graph()
+    G.add_edges_from([("a", "b"), ("b", "c")])
+
+    return G
+
+
+@pytest.fixture()
 def tmp_file(tmp_path):
     return tmp_path / "file.txt"
 
@@ -47,6 +55,16 @@ def test_write_vos_network(tmp_file, G_simple):
         contents = list(fh)
 
     expected = {"1\t2\t1\n", "1\t3\t3\n", "2\t3\t2\n"}
+    assert set(contents) == expected
+
+
+def test_write_vos_network_unweighted(tmp_file, G_unweighted):
+    nx2vos.write_vos_network(G_unweighted, tmp_file)
+
+    with open(tmp_file) as fh:
+        contents = list(fh)
+
+    expected = {"1\t2\n", "2\t3\n"}
     assert set(contents) == expected
 
 
