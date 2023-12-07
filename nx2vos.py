@@ -159,10 +159,11 @@ def output_vos_json(
         )
 
     nodes = dict(zip(G.nodes(), range(1, len(G) + 1), strict=True))
-    for u, v, d in G.edges(data=True):
-        data["network"]["links"].append(
-            {"source_id": nodes[u], "target_id": nodes[v], "strength": d["weight"]}
-        )
+    for u, v, weight in G.edges(data="weight"):
+        link_dict = {"source_id": nodes[u], "target_id": nodes[v]}
+        if weight:
+            link_dict["strength"] = weight
+        data["network"]["links"].append(link_dict)
 
 
 def write_vos_json(
