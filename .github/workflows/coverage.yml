@@ -7,16 +7,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Check out
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: "3.12"
-    - uses: actions/cache@v2
+    - uses: actions/cache@v3
       name: Configure pip caching
       with:
         path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('**/setup.py') }}
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/pyproject.toml') }}
         restore-keys: |
           ${{ runner.os }}-pip-
     - name: Install Python dependencies
