@@ -165,6 +165,8 @@ def output_vos_json(
             link_dict["strength"] = weight
         data["network"]["links"].append(link_dict)
 
+    return data
+
 
 def write_vos_json(
     G: nx.Graph,

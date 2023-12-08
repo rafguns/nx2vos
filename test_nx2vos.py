@@ -2,6 +2,7 @@ import re
 
 import networkx as nx
 import pytest
+from pytest_unordered import unordered
 
 import nx2vos
 
@@ -199,3 +200,35 @@ def test_nonnumeric_weights_scores_raises(G_with_attrs, tmp_file):
         nx2vos.write_vos_map(
             G_with_attrs, tmp_file, score_attrs=["smallint", "shorttext"]
         )
+
+
+@pytest.mark.parametrize(
+    ("attribute_mapping", "expected_items", "expected_links"),
+    [
+        (
+            {"cluster": "smallint"},
+            [
+                {"id": 1, "label": "a", "cluster": 1},
+                {"id": 2, "label": "b", "cluster": 1},
+                {"id": 3, "label": "c", "cluster": 1},
+            ],
+            [
+                {"source_id": 1, "target_id": 2, "strength": 1},
+                {"source_id": 2, "target_id": 3, "strength": 2},
+                {"source_id": 1, "target_id": 3, "strength": 3},
+            ],
+        ),
+    ],
+)
+def test_output_vos_json(
+    G_with_attrs, attribute_mapping, expected_items, expected_links
+):
+    mapping = {f"{k}_attr": v for k, v in attribute_mapping.items()}
+    data = nx2vos.output_vos_json(G_with_attrs, **mapping)
+
+    assert "network" in data
+    assert "items" in data["network"]
+    assert "links" in data["network"]
+
+    assert data["network"]["items"] == unordered(expected_items)
+    assert data["network"]["links"] == unordered(expected_links)
