@@ -153,9 +153,22 @@ def output_vos_json(
 
     data = {"network": {"items": [], "links": []}}
     for i, n in enumerate(G.nodes(), start=1):
-        # TODO fix weights and scores
+        attr_dict = {attr: G.nodes[n][attr] for attr in attrs}
+
+        # Fix weights and scores
+        new_dict = {}
+        for k, v in attr_dict.items():
+            if k.startswith(("weight<", "score<")):
+                main_label, sublabel = k.split("<")
+                try:
+                    new_dict[f"{main_label}s"][sublabel[:-1]] = v
+                except KeyError:
+                    new_dict[f"{main_label}s"] = {sublabel[:-1]: v}
+            else:
+                new_dict[k] = v
+
         data["network"]["items"].append(
-            {"id": i, "label": n, **{attr: G.nodes[n][attr] for attr in attrs}}
+            {"id": i, "label": n, **new_dict}
         )
 
     nodes = dict(zip(G.nodes(), range(1, len(G) + 1), strict=True))
