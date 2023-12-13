@@ -26,7 +26,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest >=7.1", "pytest-cov", "tox>=4.4"]
+dev = ["pytest >=7.1", "pytest-cov", "pytest-unordered", "tox>=4.4"]
 
 [project.urls]
 Home = "https://github.com/rafguns/nx2vos/"

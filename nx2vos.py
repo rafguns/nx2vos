@@ -7,6 +7,7 @@ You will typically want to use them both, especailly if you have node-level data
 
 """
 import csv
+import json
 import pathlib
 
 import networkx as nx
@@ -121,3 +122,92 @@ def write_vos_network(G: nx.Graph, fname: str | pathlib.Path):
                 (nodes[u], nodes[v]) if weight is None else (nodes[u], nodes[v], weight)
             )
             writer.writerow(row)
+
+
+def _transform_attrs(attrs):
+    """Transform dict of node attributes for JSON output
+
+    This is necessary to handle the different format for weights and scores in JSON.
+
+    """
+    transformed = {}
+    for k, v in attrs.items():
+        if k.startswith(("weight<", "score<")):
+            main_label, sublabel = k.split("<")
+            sublabel_dict = transformed.setdefault(f"{main_label}s", {})
+            sublabel_dict[sublabel[:-1]] = v
+        else:
+            transformed[k] = v
+    return transformed
+
+
+def output_vos_json(
+    G: nx.Graph,
+    *,
+    sublabel_attr: str | None = None,
+    description_attr: str | None = None,
+    url_attr: str | None = None,
+    x_attr: str | None = None,
+    y_attr: str | None = None,
+    cluster_attr: str | None = None,
+    weight_attrs: list[str] | None = None,
+    score_attrs: list[str] | None = None,
+):
+    # Transform attributes to VOSviewer format
+    G, attrs = _prepare_attrs(
+        G,
+        {
+            "sublabel": sublabel_attr,
+            "description": description_attr,
+            "url": url_attr,
+            "x": x_attr,
+            "y": y_attr,
+            "cluster": cluster_attr,
+            "weight": weight_attrs,
+            "score": score_attrs,
+        },
+    )
+
+    data = {"network": {"items": [], "links": []}}
+    for i, n in enumerate(G.nodes(), start=1):
+        node_attrs = {attr: G.nodes[n][attr] for attr in attrs}
+        data["network"]["items"].append(
+            {"id": i, "label": n, **_transform_attrs(node_attrs)}
+        )
+
+    nodes = dict(zip(G.nodes(), range(1, len(G) + 1), strict=True))
+    for u, v, weight in G.edges(data="weight"):
+        link_dict = {"source_id": nodes[u], "target_id": nodes[v]}
+        if weight:
+            link_dict["strength"] = weight
+        data["network"]["links"].append(link_dict)
+
+    return data
+
+
+def write_vos_json(
+    G: nx.Graph,
+    fname: str | pathlib.Path,
+    *,
+    sublabel_attr: str | None = None,
+    description_attr: str | None = None,
+    url_attr: str | None = None,
+    x_attr: str | None = None,
+    y_attr: str | None = None,
+    cluster_attr: str | None = None,
+    weight_attrs: list[str] | None = None,
+    score_attrs: list[str] | None = None,
+):
+    data = output_vos_json(
+        G,
+        sublabel_attr=sublabel_attr,
+        description_attr=description_attr,
+        url_attr=url_attr,
+        x_attr=x_attr,
+        y_attr=y_attr,
+        cluster_attr=cluster_attr,
+        weight_attrs=weight_attrs,
+        score_attrs=score_attrs,
+    )
+    with open(fname, "w") as fh:
+        json.dump(data, fh)
