@@ -124,6 +124,23 @@ def write_vos_network(G: nx.Graph, fname: str | pathlib.Path):
             writer.writerow(row)
 
 
+def _transform_attrs(attrs):
+    """Transform dict of node attributes for JSON output
+
+    This is necessary to handle the different format for weights and scores in JSON.
+
+    """
+    transformed = {}
+    for k, v in attrs.items():
+        if k.startswith(("weight<", "score<")):
+            main_label, sublabel = k.split("<")
+            sublabel_dict = transformed.setdefault(f"{main_label}s", {})
+            sublabel_dict[sublabel[:-1]] = v
+        else:
+            transformed[k] = v
+    return transformed
+
+
 def output_vos_json(
     G: nx.Graph,
     *,
@@ -153,22 +170,9 @@ def output_vos_json(
 
     data = {"network": {"items": [], "links": []}}
     for i, n in enumerate(G.nodes(), start=1):
-        attr_dict = {attr: G.nodes[n][attr] for attr in attrs}
-
-        # Fix weights and scores
-        new_dict = {}
-        for k, v in attr_dict.items():
-            if k.startswith(("weight<", "score<")):
-                main_label, sublabel = k.split("<")
-                try:
-                    new_dict[f"{main_label}s"][sublabel[:-1]] = v
-                except KeyError:
-                    new_dict[f"{main_label}s"] = {sublabel[:-1]: v}
-            else:
-                new_dict[k] = v
-
+        node_attrs = {attr: G.nodes[n][attr] for attr in attrs}
         data["network"]["items"].append(
-            {"id": i, "label": n, **new_dict}
+            {"id": i, "label": n, **_transform_attrs(node_attrs)}
         )
 
     nodes = dict(zip(G.nodes(), range(1, len(G) + 1), strict=True))
