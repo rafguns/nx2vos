@@ -1,3 +1,4 @@
+import json
 import re
 
 import networkx as nx
@@ -268,3 +269,20 @@ def test_output_vos_json_weights_scores(
 
     assert data["network"]["items"] == unordered(expected_items)
     assert data["network"]["links"] == unordered(expected_links)
+
+
+@pytest.mark.parametrize("G_fixture", ["G_simple", "G_unweighted", "G_with_attrs"])
+def test_write_vos_json(tmp_file, request, G_fixture):
+    # See https://engineeringfordatascience.com/posts/pytest_fixtures_with_parameterize/
+    G = request.getfixturevalue(G_fixture)
+    nx2vos.write_vos_json(G, tmp_file)
+
+    with open(tmp_file) as fh:
+        data = json.load(fh)
+
+    assert "network" in data
+    assert "items" in data["network"]
+    assert "links" in data["network"]
+
+    assert len(data["network"]["items"]) == G.number_of_nodes()
+    assert len(data["network"]["links"]) == G.number_of_edges()
