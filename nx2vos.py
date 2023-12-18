@@ -1,9 +1,11 @@
 """nx2vos: export networkx graphs to VOSviewer format
 
-This simple library exposes two functions:
-* write_vos_map()
-* write_vos_network()
-You will typically want to use them both, especailly if you have node-level data.
+This simple library exposes the following functions:
+* `write_vos_map()`
+* `write_vos_network()`
+* `write_vos_json()`
+You will typically want to use `write_vos_map` and `write_vos_network`together,
+especailly if you have node-level data.
 
 """
 import csv
@@ -12,7 +14,7 @@ import pathlib
 
 import networkx as nx
 
-__version__ = "0.1"
+__version__ = "0.2"
 
 
 class Nx2VosError(ValueError):
