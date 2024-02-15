@@ -2,6 +2,7 @@ import json
 import re
 
 import networkx as nx
+import numpy as np
 import pytest
 from pytest_unordered import unordered
 
@@ -43,6 +44,8 @@ def G_with_attrs(G_simple):  # noqa: N802 (Function name should be lowercase)
         G.nodes[n]["largeint"] = 50_000
 
         G.nodes[n]["float"] = 5.0
+
+        G.nodes[n]["numpyfloat"] = np.float32(5)
 
     return G
 
@@ -103,6 +106,10 @@ def test_write_vos_map_noattrs(tmp_file, G_simple):
         ),
         (
             {"x": "float", "y": "float"},
+            {"1\ta\t5.0\t5.0\n", "2\tb\t5.0\t5.0\n", "3\tc\t5.0\t5.0\n"},
+        ),
+                (
+            {"x": "numpyfloat", "y": "numpyfloat"},
             {"1\ta\t5.0\t5.0\n", "2\tb\t5.0\t5.0\n", "3\tc\t5.0\t5.0\n"},
         ),
         (

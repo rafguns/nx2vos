@@ -10,6 +10,7 @@ especailly if you have node-level data.
 """
 import csv
 import json
+import numbers
 import pathlib
 
 import networkx as nx
@@ -28,7 +29,7 @@ def _to_inc_number(node_vals):
 
 
 def _is_numeric(val):
-    return isinstance(val, int | float)
+    return isinstance(val, numbers.Number)
 
 
 def _transform_weight_score(attr_dict):
