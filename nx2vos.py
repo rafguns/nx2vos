@@ -4,15 +4,23 @@ This simple library exposes the following functions:
 * `write_vos_map()`
 * `write_vos_network()`
 * `write_vos_json()`
-You will typically want to use `write_vos_map` and `write_vos_network`together,
+You will typically want to use `write_vos_map` and `write_vos_network` together,
 especailly if you have node-level data.
 
 """
 import csv
 import json
+import numbers
 import pathlib
 
 import networkx as nx
+
+try:
+    import numpy as np
+
+    np_available = True
+except ImportError:
+    np_available = False
 
 __version__ = "0.2"
 
@@ -28,7 +36,7 @@ def _to_inc_number(node_vals):
 
 
 def _is_numeric(val):
-    return isinstance(val, int | float)
+    return isinstance(val, numbers.Number)
 
 
 def _transform_weight_score(attr_dict):
@@ -187,6 +195,17 @@ def output_vos_json(
     return data
 
 
+class NumpyEncoder(json.JSONEncoder):
+    """JSON encoder for numpy types"""
+
+    def default(self, obj):
+        if isinstance(obj, np.integer):
+            return int(obj)
+        if isinstance(obj, np.floating):
+            return float(obj)
+        return json.JSONEncoder.default(self, obj)
+
+
 def write_vos_json(
     G: nx.Graph,
     fname: str | pathlib.Path,
@@ -212,4 +231,4 @@ def write_vos_json(
         score_attrs=score_attrs,
     )
     with open(fname, "w") as fh:
-        json.dump(data, fh)
+        json.dump(data, fh, cls=NumpyEncoder if np_available else json.JSONEncoder)
