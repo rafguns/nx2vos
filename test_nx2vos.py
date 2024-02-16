@@ -108,7 +108,7 @@ def test_write_vos_map_noattrs(tmp_file, G_simple):
             {"x": "float", "y": "float"},
             {"1\ta\t5.0\t5.0\n", "2\tb\t5.0\t5.0\n", "3\tc\t5.0\t5.0\n"},
         ),
-                (
+        (
             {"x": "numpyfloat", "y": "numpyfloat"},
             {"1\ta\t5.0\t5.0\n", "2\tb\t5.0\t5.0\n", "3\tc\t5.0\t5.0\n"},
         ),
@@ -262,6 +262,19 @@ def test_output_vos_json_simple_attrs(
                 {"source_id": 1, "target_id": 3, "strength": 3},
             ],
         ),
+        (
+            {"score": ["float", "numpyfloat"]},
+            [
+                {"id": 1, "label": "a", "scores": {"float": 5.0, "numpyfloat": 5.0}},
+                {"id": 2, "label": "b", "scores": {"float": 5.0, "numpyfloat": 5.0}},
+                {"id": 3, "label": "c", "scores": {"float": 5.0, "numpyfloat": 5.0}},
+            ],
+            [
+                {"source_id": 1, "target_id": 2, "strength": 1},
+                {"source_id": 2, "target_id": 3, "strength": 2},
+                {"source_id": 1, "target_id": 3, "strength": 3},
+            ],
+        ),
     ],
 )
 def test_output_vos_json_weights_scores(
@@ -293,3 +306,33 @@ def test_write_vos_json(tmp_file, request, G_fixture):
 
     assert len(data["network"]["items"]) == G.number_of_nodes()
     assert len(data["network"]["links"]) == G.number_of_edges()
+
+
+@pytest.mark.parametrize(
+    ("attribute_mapping", "expected_items"),
+    [
+        (
+            {"score": ["numpyfloat"]},
+            [
+                {"id": 1, "label": "a", "scores": {"numpyfloat": 5.0}},
+                {"id": 2, "label": "b", "scores": {"numpyfloat": 5.0}},
+                {"id": 3, "label": "c", "scores": {"numpyfloat": 5.0}},
+            ],
+        ),
+    ],
+)
+def test_write_vos_json_numpy_float(
+    tmp_file, G_with_attrs, attribute_mapping, expected_items
+):
+    mapping = {f"{k}_attrs": v for k, v in attribute_mapping.items()}
+    nx2vos.write_vos_json(G_with_attrs, tmp_file, **mapping)
+
+    with open(tmp_file) as fh:
+        data = json.load(fh)
+
+    assert "network" in data
+    assert "items" in data["network"]
+    assert "links" in data["network"]
+
+    assert data["network"]["items"] == unordered(expected_items)
+    assert len(data["network"]["links"]) == G_with_attrs.number_of_edges()
