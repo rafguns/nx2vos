@@ -17,10 +17,8 @@ import networkx as nx
 
 try:
     import numpy as np
-
-    np_available = True
 except ImportError:
-    np_available = False
+    np = None
 
 __version__ = "0.2"
 
@@ -231,4 +229,4 @@ def write_vos_json(
         score_attrs=score_attrs,
     )
     with open(fname, "w") as fh:
-        json.dump(data, fh, cls=NumpyEncoder if np_available else json.JSONEncoder)
+        json.dump(data, fh, cls=NumpyEncoder if np else json.JSONEncoder)
