@@ -4,7 +4,7 @@ This simple library exposes the following functions:
 * `write_vos_map()`
 * `write_vos_network()`
 * `write_vos_json()`
-You will typically want to use `write_vos_map` and `write_vos_network`together,
+You will typically want to use `write_vos_map` and `write_vos_network` together,
 especailly if you have node-level data.
 
 """
@@ -17,6 +17,7 @@ import networkx as nx
 
 try:
     import numpy as np
+
     np_available = True
 except ImportError:
     np_available = False
@@ -32,21 +33,6 @@ def _to_inc_number(node_vals):
     unique_vals = {val for _, val in node_vals}
     vals2number = dict(zip(unique_vals, range(1, len(unique_vals) + 1), strict=True))
     return [(n, vals2number[v]) for n, v in node_vals]
-
-
-def _to_python_dtypes(node_vals):
-    dtype_mapping = {
-        np.integer: int,
-        np.floating: float,
-        np.bool_: bool,
-    }
-    def convert(val):
-        for np_dtype, python_dtype in dtype_mapping.items():
-            if isinstance(val, np_dtype):
-                return python_dtype(val)
-        return val
-
-    return [(n, convert(val)) for n, val in node_vals]
 
 
 def _is_numeric(val):
@@ -84,12 +70,9 @@ def _prepare_attrs(G: nx.Graph, attr_dict: dict[str, str | None]):
         # Check 2: numeric values where applicable
         if (
             vos_attr in {"x", "y"} or vos_attr.startswith(("weight", "score"))
-        ):
-            if not all(_is_numeric(val) for _, val in node_vals):
-                err = f"Attribute '{vos_attr}' requires numeric values"
-                raise Nx2VosError(err)
-            if np_available:
-                node_vals = _to_python_dtypes(node_vals)
+        ) and not all(_is_numeric(val) for _, val in node_vals):
+            err = f"Attribute '{vos_attr}' requires numeric values"
+            raise Nx2VosError(err)
         # Transform: transform cluster names to incrementing numbers
         if vos_attr == "cluster":
             node_vals = _to_inc_number(node_vals)
@@ -212,6 +195,17 @@ def output_vos_json(
     return data
 
 
+class NumpyEncoder(json.JSONEncoder):
+    """JSON encoder for numpy types"""
+
+    def default(self, obj):
+        if isinstance(obj, np.integer):
+            return int(obj)
+        if isinstance(obj, np.floating):
+            return float(obj)
+        return json.JSONEncoder.default(self, obj)
+
+
 def write_vos_json(
     G: nx.Graph,
     fname: str | pathlib.Path,
@@ -237,4 +231,4 @@ def write_vos_json(
         score_attrs=score_attrs,
     )
     with open(fname, "w") as fh:
-        json.dump(data, fh)
+        json.dump(data, fh, cls=NumpyEncoder if np_available else json.JSONEncoder)
