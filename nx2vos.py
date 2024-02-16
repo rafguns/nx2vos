@@ -15,6 +15,12 @@ import pathlib
 
 import networkx as nx
 
+try:
+    import numpy as np
+    np_available = True
+except ImportError:
+    np_available = False
+
 __version__ = "0.2"
 
 
@@ -26,6 +32,21 @@ def _to_inc_number(node_vals):
     unique_vals = {val for _, val in node_vals}
     vals2number = dict(zip(unique_vals, range(1, len(unique_vals) + 1), strict=True))
     return [(n, vals2number[v]) for n, v in node_vals]
+
+
+def _to_python_dtypes(node_vals):
+    dtype_mapping = {
+        np.integer: int,
+        np.floating: float,
+        np.bool_: bool,
+    }
+    def convert(val):
+        for np_dtype, python_dtype in dtype_mapping.items():
+            if isinstance(val, np_dtype):
+                return python_dtype(val)
+        return val
+
+    return [(n, convert(val)) for n, val in node_vals]
 
 
 def _is_numeric(val):
@@ -63,9 +84,12 @@ def _prepare_attrs(G: nx.Graph, attr_dict: dict[str, str | None]):
         # Check 2: numeric values where applicable
         if (
             vos_attr in {"x", "y"} or vos_attr.startswith(("weight", "score"))
-        ) and not all(_is_numeric(val) for _, val in node_vals):
-            err = f"Attribute '{vos_attr}' requires numeric values"
-            raise Nx2VosError(err)
+        ):
+            if not all(_is_numeric(val) for _, val in node_vals):
+                err = f"Attribute '{vos_attr}' requires numeric values"
+                raise Nx2VosError(err)
+            if np_available:
+                node_vals = _to_python_dtypes(node_vals)
         # Transform: transform cluster names to incrementing numbers
         if vos_attr == "cluster":
             node_vals = _to_inc_number(node_vals)
