@@ -197,11 +197,13 @@ class NumpyEncoder(json.JSONEncoder):
     """JSON encoder for numpy types"""
 
     def default(self, obj):
-        if isinstance(obj, np.integer):
-            return int(obj)
-        if isinstance(obj, np.floating):
-            return float(obj)
-        return json.JSONEncoder.default(self, obj)
+        match obj:
+            case np.integer():
+                return int(obj)
+            case np.floating():
+                return float(obj)
+            case _:
+                return json.JSONEncoder.default(self, obj)
 
 
 def write_vos_json(
