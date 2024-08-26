@@ -45,7 +45,7 @@ def _transform_weight_score(attr_dict):
     return {**attr_dict, **tmp}
 
 
-def _prepare_attrs(G: nx.Graph, attr_dict: dict[str, str | None]):
+def _prepare_attrs(G: nx.Graph, attr_dict: dict[str, str | None], label_attr: str | None = None):
     attrs = []
 
     # Leave out all unspecified attributes (None or empty iterable)
@@ -83,6 +83,9 @@ def _prepare_attrs(G: nx.Graph, attr_dict: dict[str, str | None]):
             G.nodes[n][vos_attr] = val_to_write
         attrs.append(vos_attr)
 
+    if label_attr:
+        G = nx.relabel_nodes(G, dict(G.nodes.data(label_attr)))
+
     return G, attrs
 
 
@@ -90,6 +93,7 @@ def write_vos_map(
     G: nx.Graph,
     fname: str | pathlib.Path,
     *,
+    label_attr: str | None = None,
     sublabel_attr: str | None = None,
     description_attr: str | None = None,
     url_attr: str | None = None,
@@ -111,7 +115,7 @@ def write_vos_map(
             "cluster": cluster_attr,
             "weight": weight_attrs,
             "score": score_attrs,
-        },
+        }, label_attr=label_attr
     )
     # Write to file
     with open(fname, "w", newline="") as fh:
@@ -152,6 +156,7 @@ def _transform_attrs(attrs):
 def output_vos_json(
     G: nx.Graph,
     *,
+    label_attr: str | None = None,
     sublabel_attr: str | None = None,
     description_attr: str | None = None,
     url_attr: str | None = None,
@@ -174,6 +179,7 @@ def output_vos_json(
             "weight": weight_attrs,
             "score": score_attrs,
         },
+        label_attr=label_attr
     )
 
     data = {"network": {"items": [], "links": []}}
@@ -208,6 +214,7 @@ def write_vos_json(
     G: nx.Graph,
     fname: str | pathlib.Path,
     *,
+    label_attr: str | None = None,
     sublabel_attr: str | None = None,
     description_attr: str | None = None,
     url_attr: str | None = None,
@@ -219,6 +226,7 @@ def write_vos_json(
 ):
     data = output_vos_json(
         G,
+        label_attr=label_attr,
         sublabel_attr=sublabel_attr,
         description_attr=description_attr,
         url_attr=url_attr,

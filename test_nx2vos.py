@@ -50,6 +50,13 @@ def G_with_attrs(G_simple):  # noqa: N802 (Function name should be lowercase)
     return G
 
 
+@pytest.fixture()
+def G_with_label_attr():
+    G = nx.Graph()
+    G.add_nodes_from([(0, {"label": "a"}), (1, {"label": "b"})])
+
+    return G
+
 # endregion
 
 
