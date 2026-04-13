@@ -22,7 +22,7 @@ classifiers = [
 ]
 requires-python=">=3.9"
 dependencies = [
-        "networkx>=3.0",
+        "networkx>=3.2.1",
 ]
 
 [project.optional-dependencies]
