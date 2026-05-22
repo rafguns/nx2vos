@@ -1,7 +1,7 @@
 nx2vos
 ======
 
-nx2vos is a simple Python library that exports [networkx](https://networkx.org) graphs or networks to the [VOSviewer](https://www.vosviewer.com/) format.
+nx2vos is a Python library that exports [networkx](https://networkx.org) graphs or networks to the [VOSviewer](https://www.vosviewer.com/) format.
 
 ## Installation
 
@@ -14,7 +14,28 @@ pip install nx2vos
 
 ## Usage
 
-Using nx2vos, you can write a networkx graph to [VOSviewer map and network files](https://app.vosviewer.com/docs/file-types/map-and-network-file-type/) or to a [VOSviewer JSON file](https://app.vosviewer.com/docs/file-types/json-file-type/).
+Using nx2vos, you can write a networkx graph  to a [VOSviewer JSON file](https://app.vosviewer.com/docs/file-types/json-file-type/) or to [VOSviewer map and network files](https://app.vosviewer.com/docs/file-types/map-and-network-file-type/).
+
+### JSON files
+
+In general, we recommend exporting your graph to a VOSviewer JSON file. To save:
+
+```python
+import networkx as nx
+import nx2vos
+
+# Create example network
+G = nx.Graph()
+G.add_weighted_edges_from([("a", "b", 1), ("b", "c", 2), ("a", "c", 3)])
+
+# Save graph to JSON
+nx2vos.write_vos_json(G, "graph.json")
+```
+
+To visualize the result in VOSviewer, click `Create...` in the `File` tab on the left. Choose `Create a map based on network data` and point VOSviewer to your JSON file. In the following screens, you can adjust the map by, for instance, excluding certain nodes or edges. After clicking `Finish`, the resulting map is shown.
+
+> [!NOTE]
+> VOSviewer JSON files can also store configuration of the visualization, such as color scheme or parameters of the VOS algorithm. This is not currently supported by nx2vos.
 
 ### Map and network files
 
@@ -39,28 +60,6 @@ nx2vos.write_vos_network(G, "network.txt")
 
 To visualize the result in VOSviewer, click `Create...` in the `File` tab on the left. Choose `Create a map based on network data` and point VOSviewer to your map and network file. In the following screens, you can adjust the map by, for instance, excluding certain nodes or edges. After clicking `Finish`, the resulting map is shown.
 
-### JSON files
-
-More recently, VOSviewer also supports a JSON file format, which contais both data on items and the links between them. In other words, one JSON file can replace both a map and network file.
-
-To save:
-
-```python
-import networkx as nx
-import nx2vos
-
-# Create example network
-G = nx.Graph()
-G.add_weighted_edges_from([("a", "b", 1), ("b", "c", 2), ("a", "c", 3)])
-
-# Save graph to JSON
-nx2vos.write_vos_json(G, "graph.json")
-```
-
-To visualize the result in VOSviewer, click `Create...` in the `File` tab on the left. Choose `Create a map based on network data` and point VOSviewer to your JSON file. In the following screens, you can adjust the map by, for instance, excluding certain nodes or edges. After clicking `Finish`, the resulting map is shown.
-
-VOSviewer JSON files can also store configuration of the visualization, such as color scheme or parameters of the VOS algorithm. This is not currently supported by nx2vos.
-
 ### Node attributes
 
 You can instruct nx2vos which attribute on the networkx side corresponds to which attribute on the VOSviewer side. Let's look at an example, building on the previous code snippet:
@@ -75,11 +74,7 @@ for n, val in pr.items():
 for n in G:
     G.nodes[n]["text"] = f"This is node <b>{n}</b>."
 
-# Write to map file, including attribute data:
-nx2vos.write_vos_map(
-    G, "map2.txt", description_attr="text", weight_attrs=["pagerank"]
-)
-# Or write to JSON, including attribute data:
+# Write to JSON, including attribute data
 nx2vos.write_vos_json(
     G, "graph2.json", description_attr="text", weight_attrs=["pagerank"]
 )
